@@ -2,6 +2,8 @@ from django.http.response import Http404, HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Category, Women
+from .forms import AddPostForm
+
 
 # Create your views here.
 menu = [
@@ -26,7 +28,17 @@ def about(request):
     return render(request, 'women/about.html')
 
 def addpage(request):
-    return render(request, 'women/addpage.html', {'title': 'Add post', 'menu': menu})
+    if request.method == 'POST':
+        form = AddPostForm(request.POST)
+        if form.is_valid():
+            try:
+                Women.objects.create(**form.cleaned_data)
+                return redirect('home')
+            except:
+                form.add_error(None, "Ошибка добавления поста")
+    else:
+        form = AddPostForm()
+    return render(request, 'women/addpage.html', {'form': form, 'title': 'Добавление статьи', 'menu': menu})
 
 def contact(request):
     return HttpResponse("Contacts")
