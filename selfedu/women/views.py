@@ -1,7 +1,8 @@
 from django.db import models
 from django.http.response import Http404, HttpResponse, HttpResponseNotFound
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.generic import ListView
+from django.shortcuts import redirect, render
+from django.urls.base import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView
 
 from .models import Category, Women
 from .forms import AddPostForm
@@ -30,28 +31,19 @@ class WomenHome(ListView):
     def get_queryset(self):
         return Women.objects.filter(is_published = True)
 
-# def index(request):
-#     posts = Women.objects.all()
-#     context = {
-#         'posts' : posts,
-#         'menu' : menu, 
-#         'title' : "Главная страница", 
-#         'cat_selected': 0,
-#     }
-#     return render(request, 'women/index.html', context = context)
-
 def about(request):
     return render(request, 'women/about.html')
 
-def addpage(request):
-    if request.method == 'POST':
-        form = AddPostForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-    else:
-        form = AddPostForm()
-    return render(request, 'women/addpage.html', {'form': form, 'title': 'Добавление статьи', 'menu': menu})
+class AddPage(CreateView):
+    form_class = AddPostForm
+    template_name = 'women/addpage.html'
+    success_url = reverse_lazy('home')
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Добавление статьи'
+        context['menu'] = menu
+        return context
 
 def contact(request):
     return HttpResponse("Contacts")
@@ -59,17 +51,18 @@ def contact(request):
 def login(request):
     return HttpResponse("logged in")
 
-def show_post(request, post_slug):
-    post = get_object_or_404(Women, slug = post_slug)
+class ShowPost(DetailView):
+    model = Women
+    template_name = 'women/post.html'
+    slug_url_kwarg = 'post_slug'
+    context_object_name = 'post'
 
-    context = {
-        'post' : post,
-        'menu' : menu, 
-        'title' : post.title, 
-        'cat_selected': post.cat_id,
-    }
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu'] = menu
+        context['title'] = context['post']
+        return context
 
-    return render(request, 'women/post.html', context= context)
 
 
 class WomenCategory(ListView):
@@ -81,7 +74,7 @@ class WomenCategory(ListView):
     def get_queryset(self):
         return Women.objects.filter(cat__slug=self.kwargs['cat_slug'], is_published=True)
 
-    def get_context_data(self, *,object_list=None, **kwargs):
+    def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Категория - ' + str(context['posts'][0].cat)
         context['menu'] = menu
