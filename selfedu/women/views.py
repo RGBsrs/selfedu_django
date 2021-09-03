@@ -1,5 +1,7 @@
+from django.db import models
 from django.http.response import Http404, HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import ListView
 
 from .models import Category, Women
 from .forms import AddPostForm
@@ -13,29 +15,40 @@ menu = [
     {'title': "Вход", 'url_name' : 'login'},
 ]
 
+class WomenHome(ListView):
+    model = Women
+    template_name = 'women/index.html'
+    context_object_name = 'posts'
 
-def index(request):
-    posts = Women.objects.all()
-    context = {
-        'posts' : posts,
-        'menu' : menu, 
-        'title' : "Главная страница", 
-        'cat_selected': 0,
-    }
-    return render(request, 'women/index.html', context = context)
+    def get_context_data(self, *, object_list = None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu'] = menu
+        context['title'] = "Главная страница"
+        context['cat_selected'] = 0
+        return context
+
+    def get_queryset(self):
+        return Women.objects.filter(is_published = True)
+
+# def index(request):
+#     posts = Women.objects.all()
+#     context = {
+#         'posts' : posts,
+#         'menu' : menu, 
+#         'title' : "Главная страница", 
+#         'cat_selected': 0,
+#     }
+#     return render(request, 'women/index.html', context = context)
 
 def about(request):
     return render(request, 'women/about.html')
 
 def addpage(request):
     if request.method == 'POST':
-        form = AddPostForm(request.POST)
+        form = AddPostForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                Women.objects.create(**form.cleaned_data)
-                return redirect('home')
-            except:
-                form.add_error(None, "Ошибка добавления поста")
+            form.save()
+            return redirect('home')
     else:
         form = AddPostForm()
     return render(request, 'women/addpage.html', {'form': form, 'title': 'Добавление статьи', 'menu': menu})
@@ -59,19 +72,21 @@ def show_post(request, post_slug):
     return render(request, 'women/post.html', context= context)
 
 
-def show_category(request, cat_slug):
-    posts = Women.objects.filter(cat__slug = cat_slug)
+class WomenCategory(ListView):
+    model = Women
+    template_name = 'women/index.html'
+    context_object_name = 'posts'
+    allow_empty = False
 
-    if len(posts) == 0:
-        raise Http404()
+    def get_queryset(self):
+        return Women.objects.filter(cat__slug=self.kwargs['cat_slug'], is_published=True)
 
-    context = {
-        'posts' : posts,
-        'menu' : menu, 
-        'title' : "Отображение по рубрикам", 
-        'cat_selected': posts.first().cat_id,
-    }
-    return render(request, 'women/index.html', context = context)
+    def get_context_data(self, *,object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Категория - ' + str(context['posts'][0].cat)
+        context['menu'] = menu
+        context['cat_selected'] = context['posts'][0].cat_id
+        return context
 
 def pageNotFound(request, exception):
     return HttpResponseNotFound("Страница не найдена")
