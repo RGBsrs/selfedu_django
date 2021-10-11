@@ -1,20 +1,12 @@
 from django.db import models
-from django.http.response import Http404, HttpResponse, HttpResponseNotFound
-from django.shortcuts import redirect, render
+from django.http.response import HttpResponse, HttpResponseNotFound
+from django.shortcuts import render
 from django.urls.base import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
 
-from .models import Category, Women
+from .models import Women
 from .forms import AddPostForm
 
-
-# Create your views here.
-menu = [
-    {'title': "О сайте", 'url_name' : 'about'},
-    {'title': "Добавить статью", 'url_name' : 'add_page'},
-    {'title': "Обратная связь", 'url_name' : 'contact'},
-    {'title': "Вход", 'url_name' : 'login'},
-]
 
 class WomenHome(ListView):
     model = Women
