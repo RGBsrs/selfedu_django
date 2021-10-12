@@ -41,10 +41,12 @@
     {% endif %}
 
 	{% for c in cats %}
+		{% if c.women__count > 0 %}
 		{% if c.pk == cat_selected %}
-		<li class="selected"> {{ c.name }}</li>
+		<li class="selected"> {{ c.name }} -- {{c.women__count}}</li>
 		{% else %}
 		<li><a href="{{ c.get_absolute_url }}">{{ c.name }}</a></li>
+		{% endif %}
 		{% endif %}
 	{% endfor %}
 
