@@ -11,7 +11,7 @@ menu = [
 
 
 class DataMixin:
-    paginate_by = 2
+    paginate_by = 1
 
     def get_user_context(self, **kwargs):
         context = kwargs
