@@ -64,8 +64,23 @@
 
 <!-- Блок контента -->
 	<div class="content-text">
-{% block content %}
-{% endblock %}
+	{% block content %}
+	{% endblock %}
+		{% if page_obj.has_other_pages %}
+		<nav class="list-pages">
+			{% for p in paginator.page_range %}
+			{% if page_obj.number == p %}
+			<li class="page-num page-num-selected">
+				{{ p }}
+			</li>
+			{% else %}
+			<li class="page-num">
+				<a href="?page={{ p }}"> {{ p }}</a>
+			</li>
+			{% endif %}
+			{% endfor %}
+		</nav>
+		{% endif %}
 	</div>
 <!-- Конец блока контента -->
 
